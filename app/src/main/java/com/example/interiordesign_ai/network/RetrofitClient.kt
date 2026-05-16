@@ -15,15 +15,20 @@ object RetrofitClient {
 
     /**
      * Interceptor that injects Cloudflare credentials as custom headers
-     * on every request to the AI endpoint. The PHP proxy reads them
-     * from headers — no credentials stored on the server at all.
+     * on every request to the AI endpoint.
      */
     private val credentialInterceptor = okhttp3.Interceptor { chain ->
         val original = chain.request()
-        val enhanced = original.newBuilder()
-            .header("X-Cf-Acct", ApiKeyProvider.accountId())
-            .header("X-Cf-Tok",  ApiKeyProvider.token())
-            .build()
+        val builder = original.newBuilder()
+
+        if (BuildConfig.CF_ACCOUNT_ID.isNotBlank()) {
+            builder.header("X-Cf-Acct", BuildConfig.CF_ACCOUNT_ID)
+        }
+        if (BuildConfig.CF_API_TOKEN.isNotBlank()) {
+            builder.header("X-Cf-Tok", BuildConfig.CF_API_TOKEN)
+        }
+
+        val enhanced = builder.build()
         chain.proceed(enhanced)
     }
 
